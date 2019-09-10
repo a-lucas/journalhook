@@ -58,7 +58,23 @@ func stringifyEntries(data map[string]interface{}) map[string]string {
 	return entries
 }
 
+// 	logrus.SetReportCaller(true)
+func (hook *JournalHook) setCaller(entry *logrus.Entry) *logrus.Entry {
+	if entry.HasCaller() {
+		funcVal := entry.Caller.Function
+		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
+		if funcVal != "" {
+			entry.Data["func"] = funcVal
+		}
+		if fileVal != "" {
+			entry.Data["file"] = fileVal
+		}
+	}
+	return entry
+}
+
 func (hook *JournalHook) Fire(entry *logrus.Entry) error {
+	entry = hook.setCaller(entry)
 	return journal.Send(entry.Message, severityMap[entry.Level], stringifyEntries(entry.Data))
 }
 
